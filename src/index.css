@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Mobile optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text selection on buttons and inputs for better mobile UX */
+button, input {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Countdown circle animation */
+@keyframes countdown-circle {
+  from {
+    stroke-dashoffset: var(--circle-start-offset);
+  }
+  to {
+    stroke-dashoffset: var(--circle-end-offset);
+  }
+}
+
+.countdown-circle-animated {
+  animation: countdown-circle linear forwards;
+  animation-duration: var(--circle-animation-duration, 0s);
+  animation-play-state: var(--circle-animation-state, paused);
+}

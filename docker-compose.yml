@@ -1,0 +1,13 @@
+services:
+  ha-timer-game-app:
+    image: ghcr.io/elien666/ha-timer-game-app:latest
+    ports:
+      - "8080:80"
+    environment:
+      # Runtime environment variables (for config injection)
+      # These are automatically loaded from .env file if present
+      - VITE_HASS_HOST=${VITE_HASS_HOST:-}
+      - VITE_HASS_ACCESS_TOKEN=${VITE_HASS_ACCESS_TOKEN:-}
+      - VITE_HASS_BUTTON_ENTITY=${VITE_HASS_BUTTON_ENTITY:-}
+    restart: unless-stopped
+

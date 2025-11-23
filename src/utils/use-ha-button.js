@@ -3,7 +3,7 @@ import {
   createConnection,
 } from 'home-assistant-js-websocket'
 import { useEffect, useRef, useState } from 'react'
-import { HASS_HOST, HASS_ACCESS_TOKEN, HASS_BUTTON_ENTITY } from './config'
+import { HASS_HOST, HASS_ACCESS_TOKEN, HASS_BUTTON_ENTITY, isHAConfigured } from './config'
 
 /**
  * Custom hook to subscribe to Home Assistant button entity state changes
@@ -21,12 +21,22 @@ const useHaButton = (onButtonPress) => {
   }, [onButtonPress])
 
   useEffect(() => {
+    // Don't attempt connection if HA is not configured
+    if (!isHAConfigured()) {
+      setError(new Error('Home Assistant is not configured'))
+      setIsConnected(false)
+      return
+    }
+
     let connection = null
     let isMounted = true
 
     async function connect() {
       let auth
       try {
+        if (!HASS_HOST) {
+          throw new Error('HASS_HOST is not configured')
+        }
         if (!HASS_ACCESS_TOKEN) {
           throw new Error('HASS_ACCESS_TOKEN is not configured')
         }

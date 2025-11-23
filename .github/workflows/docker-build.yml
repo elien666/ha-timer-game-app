@@ -45,6 +45,10 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            VITE_HASS_HOST=${{ secrets.VITE_HASS_HOST }}
+            VITE_HASS_ACCESS_TOKEN=${{ secrets.VITE_HASS_ACCESS_TOKEN }}
+            VITE_HASS_BUTTON_ENTITY=${{ secrets.VITE_HASS_BUTTON_ENTITY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

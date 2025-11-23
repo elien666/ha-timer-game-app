@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import useCountdown from './utils/use-countdown'
 import useHaButton from './utils/use-ha-button'
-import { HASS_BUTTON_ENTITY } from './utils/config'
-import { RotateCw, HouseWifi, WifiOff, Settings } from 'lucide-react'
+import { HASS_BUTTON_ENTITY, HASS_HOST, HASS_ACCESS_TOKEN, isHAConfigured, getMissingConfig } from './utils/config'
+import { RotateCw, HouseWifi, WifiOff, Settings, AlertCircle } from 'lucide-react'
 
 // Component to render time with smaller unit letters
 const TimeDisplay = ({ timeString }) => {
@@ -211,6 +211,75 @@ function App() {
     prevTimeLeftRef.current = currentTimeLeft
   }, [countdown.timeLeft, countdown.timeLeftFractional, countdown.isRunning, playTickSound])
 
+  // Prevent screensaver when timer is running
+  const wakeLockRef = useRef(null)
+  useEffect(() => {
+    // Check if Screen Wake Lock API is available
+    if (!('wakeLock' in navigator)) {
+      return
+    }
+
+    const requestWakeLock = async () => {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen')
+        // Handle wake lock release (e.g., when user switches tabs)
+        wakeLockRef.current.addEventListener('release', () => {
+          // Wake lock was released, but we'll try to reacquire if timer is still running
+          if (countdown.isRunning) {
+            requestWakeLock()
+          }
+        })
+      } catch (err) {
+        // Wake lock request failed (e.g., user denied permission or browser doesn't support it)
+        console.warn('Could not acquire wake lock:', err)
+      }
+    }
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release()
+          wakeLockRef.current = null
+        } catch (err) {
+          console.warn('Could not release wake lock:', err)
+        }
+      }
+    }
+
+    if (countdown.isRunning) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+
+    // Cleanup: release wake lock on unmount or when timer stops
+    return () => {
+      releaseWakeLock()
+    }
+  }, [countdown.isRunning])
+
+  // Reacquire wake lock when page becomes visible again (e.g., user switches back to tab)
+  useEffect(() => {
+    if (!('wakeLock' in navigator)) {
+      return
+    }
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && countdown.isRunning && !wakeLockRef.current) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request('screen')
+        } catch (err) {
+          console.warn('Could not reacquire wake lock:', err)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [countdown.isRunning])
+
   return (
     <div 
       className="h-screen w-screen flex flex-col items-center justify-center text-white overflow-hidden relative"
@@ -228,17 +297,43 @@ function App() {
         }}
       />
       {/* Connection Status Icon - Top Right */}
-      {HASS_BUTTON_ENTITY && (
-        <div className="absolute top-4 right-4">
-          {connectionError ? (
-            <WifiOff className="w-6 h-6 text-gray-500" />
-          ) : isConnected ? (
-            <HouseWifi className="w-6 h-6 text-gray-500" />
-          ) : (
-            <HouseWifi className="w-6 h-6 text-gray-500 animate-pulse" />
-          )}
-        </div>
-      )}
+      <div className="absolute top-4 right-4 z-50">
+        {!isHAConfigured() ? (
+          <div className="flex flex-col items-end space-y-2">
+            <AlertCircle className="w-6 h-6 text-orange-500" />
+            <div className="w-72 p-3 bg-gray-800 border border-orange-500 rounded-lg shadow-xl text-sm text-white whitespace-normal">
+              <div className="font-semibold text-orange-400 mb-2">HA Connection Disabled</div>
+              <div className="text-gray-300 mb-2">Required environment variables are not set:</div>
+              <ul className="list-disc list-inside text-gray-400 space-y-1">
+                {getMissingConfig().map((varName) => (
+                  <li key={varName} className="font-mono text-xs">{varName}</li>
+                ))}
+              </ul>
+              <div className="text-gray-400 text-xs mt-2">
+                Set these variables to enable Home Assistant integration.
+              </div>
+            </div>
+          </div>
+        ) : !isConnected ? (
+          <div className="flex flex-col items-end space-y-2">
+            <WifiOff className="w-6 h-6 text-red-500" />
+            {connectionError && (
+              <div className="w-64 p-3 bg-gray-800 border border-red-500 rounded-lg shadow-xl text-sm text-white whitespace-normal">
+                <div className="font-semibold text-red-400 mb-1">Connection Failed</div>
+                <div className="text-gray-300">{connectionError.message || 'Unable to connect to Home Assistant'}</div>
+              </div>
+            )}
+            {!connectionError && !isConnected && (
+              <div className="w-64 p-3 bg-gray-800 border border-yellow-500 rounded-lg shadow-xl text-sm text-white whitespace-normal">
+                <div className="font-semibold text-yellow-400 mb-1">Connecting...</div>
+                <div className="text-gray-300">Attempting to connect to Home Assistant</div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <HouseWifi className="w-6 h-6 text-green-500" />
+        )}
+      </div>
 
       {/* Countdown Display - Clickable to start/pause */}
       <div className="flex-1 flex items-center justify-center relative">

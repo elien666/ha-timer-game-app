@@ -1,3 +1,5 @@
+[![Build and Push Docker Image](https://github.com/elien666/ha-timer-game-app/actions/workflows/docker-build.yml/badge.svg)](https://github.com/elien666/ha-timer-game-app/actions/workflows/docker-build.yml)
+
 # HA Countdown Timer App
 
 A React + Vite application that displays a configurable countdown timer, triggered either by a UI button or a Zigbee button connected to Home Assistant.

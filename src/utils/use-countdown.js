@@ -13,6 +13,7 @@ const useCountdown = (initialDuration = 0) => {
   const intervalRef = useRef(null)
   const startTimeRef = useRef(null)
   const remainingTimeRef = useRef(initialDuration)
+  const hasTriggeredCompleteRef = useRef(false)
 
   // Format time without leading zeros on the first component, with unit labels
   // Shows "5s" for 5 seconds, "1m:05s" for 65 seconds, "1h:00m:05s" for 3605 seconds
@@ -85,6 +86,7 @@ const useCountdown = (initialDuration = 0) => {
     if (timeLeft > 0) {
       remainingTimeRef.current = timeLeftFractional || timeLeft
       startTimeRef.current = Date.now()
+      hasTriggeredCompleteRef.current = false // Reset completion flag when starting
       setIsRunning(true)
     }
   }, [timeLeft, timeLeftFractional])
@@ -100,6 +102,7 @@ const useCountdown = (initialDuration = 0) => {
     setTimeLeft(duration)
     setTimeLeftFractional(duration)
     remainingTimeRef.current = duration
+    hasTriggeredCompleteRef.current = false // Reset completion flag when resetting
   }, [duration])
 
   // Reset and start the countdown
@@ -108,6 +111,7 @@ const useCountdown = (initialDuration = 0) => {
     setTimeLeftFractional(duration)
     remainingTimeRef.current = duration
     startTimeRef.current = Date.now()
+    hasTriggeredCompleteRef.current = false // Reset completion flag when resetting and starting
     setIsRunning(true)
   }, [duration])
 
@@ -119,6 +123,7 @@ const useCountdown = (initialDuration = 0) => {
       setTimeLeft(seconds)
       setTimeLeftFractional(seconds)
       remainingTimeRef.current = seconds
+      hasTriggeredCompleteRef.current = false // Reset completion flag when duration changes
     }
   }, [isRunning])
 
@@ -161,7 +166,8 @@ const useCountdown = (initialDuration = 0) => {
 
   // Handle countdown completion
   useEffect(() => {
-    if (timeLeft === 0 && !isRunning && duration > 0) {
+    if (timeLeft === 0 && !isRunning && duration > 0 && !hasTriggeredCompleteRef.current) {
+      hasTriggeredCompleteRef.current = true
       handleComplete()
     }
   }, [timeLeft, isRunning, duration, handleComplete])

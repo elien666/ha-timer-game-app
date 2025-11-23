@@ -337,9 +337,29 @@ function App() {
 
       {/* Settings Icon - Bottom Right */}
       <button
-        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-        className="absolute bottom-4 right-4 text-white hover:text-gray-300 transition-colors touch-manipulation active:scale-95"
+        onClick={(e) => {
+          e.stopPropagation()
+          setIsSettingsOpen(prev => !prev)
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation()
+          // Prevent double-firing by checking if it's a valid touch
+          if (e.touches.length === 1) {
+            setIsSettingsOpen(prev => !prev)
+          }
+        }}
+        className="absolute bottom-4 right-4 text-white hover:text-gray-300 transition-colors touch-manipulation active:scale-95 z-50"
+        style={{ 
+          touchAction: 'manipulation',
+          minWidth: '44px',
+          minHeight: '44px',
+          padding: '12px',
+          WebkitTapHighlightColor: 'transparent',
+          cursor: 'pointer',
+        }}
         title="Settings"
+        aria-label="Settings"
+        type="button"
       >
         <Settings className="w-6 h-6" />
       </button>
@@ -351,9 +371,20 @@ function App() {
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
             onClick={() => setIsSettingsOpen(false)}
+            onTouchStart={(e) => {
+              // Only close if touching the backdrop, not the popover
+              if (e.target === e.currentTarget) {
+                setIsSettingsOpen(false)
+              }
+            }}
+            style={{ touchAction: 'manipulation' }}
           />
           {/* Popover */}
-          <div className="fixed bottom-20 right-4 z-50 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-6 min-w-[200px]">
+          <div 
+            className="fixed bottom-20 right-4 z-50 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-6 min-w-[200px]"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <div className="flex flex-col space-y-4">
               {/* Duration Input */}
               <div className="flex flex-col space-y-2">

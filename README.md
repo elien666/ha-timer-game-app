@@ -6,6 +6,8 @@ A React + Vite application that displays a configurable countdown timer, trigger
 
 ## Features
 
+<img width="344" height="744" alt="Screenshot" src="https://github.com/user-attachments/assets/49355daf-892f-4980-b84a-515433491104" />
+
 - Configurable countdown duration (in seconds)
 - Start, Stop, and Reset controls
 - Physical Zigbee button integration via Home Assistant

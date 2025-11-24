@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "baseBranches": ["dependency-updates"],
+  "baseBranchPatterns": [
+    "dependency-updates"
+  ],
   "extends": [
     "config:recommended"
   ]
